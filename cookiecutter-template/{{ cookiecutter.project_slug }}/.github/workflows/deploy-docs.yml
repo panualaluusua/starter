@@ -29,10 +29,24 @@ jobs:
         run: npm run build
         working-directory: .
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Checkout central docs repo
+        uses: actions/checkout@v4
         with:
-{% raw %}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-{% endraw %}
-          publish_dir: ./build
+          repository: panualaluusua/docs
+          token: ${{ secrets.DOCS_PUSH_TOKEN }}
+          path: central-docs
+
+      - name: Copy built docs to central repo
+        run: |
+          rm -rf central-docs/docs/${{ github.event.repository.name }}
+          mkdir -p central-docs/docs/${{ github.event.repository.name }}
+          cp -r build/* central-docs/docs/${{ github.event.repository.name }}/
+
+      - name: Commit and push docs to central repo
+        run: |
+          cd central-docs
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Update docs for ${{ github.event.repository.name }} [skip ci]" || echo "No changes to commit"
+          git push

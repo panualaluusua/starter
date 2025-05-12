@@ -123,6 +123,63 @@ def setup_remote_repo():
                 print(push_result.stdout)
     return True
 
+def set_github_pages_branch():
+    """Asettaa GitHub Pages -julkaisulähteen automaattisesti gh-pages-haaraan (root)."""
+    github_username = "{{ cookiecutter.github_username }}"
+    repo_name = "{{ cookiecutter.github_repository_name }}"
+    if github_username and repo_name:
+        print("Yritetään asettaa GitHub Pages -julkaisulähde gh-pages-haaraan...")
+        cmd = [
+            "gh", "api",
+            "-X", "PATCH",
+            "-H", "Accept: application/vnd.github+json",
+            f"/repos/{github_username}/{repo_name}/pages",
+            "-f", "source.branch=gh-pages",
+            "-f", "source.path=/"
+        ]
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            if result.returncode == 0:
+                print("✅ GitHub Pages -julkaisulähde asetettu onnistuneesti gh-pages-haaraan.")
+            else:
+                print("⚠️  GitHub Pages -asetuksen automaatio epäonnistui.")
+                print("Virhekoodi:", result.returncode)
+                print("Virheviesti:", result.stderr)
+                print("Aseta tarvittaessa Pages-julkaisulähde käsin repositoryn asetuksista.")
+        except Exception as e:
+            print("⚠️  Poikkeus GitHub Pages -asetuksen automaatiossa:", e)
+            print("Aseta tarvittaessa Pages-julkaisulähde käsin repositoryn asetuksista.")
+    else:
+        print("GitHub-tietoja ei annettu, ohitetaan Pages-haaran asetus.")
+    return True
+
+
+def add_docs_push_token_secret():
+    """Lukee DOCS_PUSH_TOKEN-arvon .env-tiedostosta tai ympäristömuuttujasta ja lisää sen uuden projektin GitHub-repoon gh CLI:llä."""
+    from dotenv import load_dotenv
+    load_dotenv()
+    github_username = "{{ cookiecutter.github_username }}"
+    repo_name = "{{ cookiecutter.github_repository_name }}"
+    token = os.environ.get("DOCS_PUSH_TOKEN")
+    if not token:
+        print("Syötä DOCS_PUSH_TOKEN (PAT-token, jolla on oikeudet docs-repoon):")
+        token = input().strip()
+    if github_username and repo_name and token:
+        print("Lisätään DOCS_PUSH_TOKEN secret uuteen projektiin...")
+        cmd = [
+            "gh", "secret", "set", "DOCS_PUSH_TOKEN",
+            "--repo", f"{github_username}/{repo_name}",
+            "--body", token
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            print("✅ DOCS_PUSH_TOKEN lisätty onnistuneesti!")
+        else:
+            print("⚠️  Salaisuuden lisääminen epäonnistui:")
+            print(result.stderr)
+    else:
+        print("Tarvittavat tiedot puuttuvat, salaisuutta ei lisätty.")
+
 
 def main():
     """Pääfunktio, joka suorittaa kaikki toimenpiteet."""
@@ -133,7 +190,9 @@ def main():
         initialize_git,
         install_dependencies,
         create_first_commit,
-        setup_remote_repo
+        setup_remote_repo,
+        set_github_pages_branch,
+        add_docs_push_token_secret
     ]
     
     for step in steps:

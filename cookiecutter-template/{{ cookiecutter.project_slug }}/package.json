@@ -1,0 +1,14 @@
+{
+    "name": "{{ cookiecutter.project_slug }}-docs",
+    "version": "0.0.1",
+    "private": true,
+    "scripts": {
+      "start": "docusaurus start",
+      "build": "docusaurus build",
+      "deploy": "docusaurus deploy"
+    },
+    "dependencies": {
+      "@docusaurus/core": "^3.2.1",
+      "@docusaurus/preset-classic": "^3.2.1"
+    }
+  }

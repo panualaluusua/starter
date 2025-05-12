@@ -47,13 +47,33 @@ def install_dependencies():
     
     # Tarkistetaan, onko requirements.txt olemassa
     if os.path.exists("requirements.txt"):
-        if not run_command("pip install -r requirements.txt"):
+        print("Suoritetaan: pip install -r requirements.txt")
+        result = subprocess.run(["pip", "install", "-r", "requirements.txt"], capture_output=True, text=True)
+        if result.returncode != 0:
+            print("Virhe suoritettaessa komentoa: pip install -r requirements.txt")
+            print("Virhekoodi:", result.returncode)
+            print("Virheviesti:", result.stderr)
             print("Varoitus: Python-riippuvuuksien asennus epäonnistui.")
+            print("Korjausehdotus: Varmista, että käytössäsi on oikea Python-versio ja tarvittavat oikeudet asentaa paketit.")
+        else:
+            print(result.stdout)
     
     # Tarkistetaan, onko package.json olemassa
     if os.path.exists("package.json"):
-        if not run_command("npm install"):
-            print("Varoitus: Node.js-riippuvuuksien asennus epäonnistui.")
+        print("Suoritetaan: npm install")
+        npm_cmd = "npm.cmd" if os.name == "nt" else "npm"
+        try:
+            result = subprocess.run([npm_cmd, "install"], capture_output=True, text=True)
+        except FileNotFoundError:
+            print(f"Virhe: {npm_cmd} komentoa ei löydy. Varmista, että Node.js on asennettu ja että npm on lisätty PATH-ympäristömuuttujaan.")
+        else:
+            if result.returncode != 0:
+                print("Virhe suoritettaessa komentoa: npm install")
+                print("Virhekoodi:", result.returncode)
+                print("Virheviesti:", result.stderr)
+                print("Korjausehdotus: Varmista, että Node.js on asennettu (lataa se osoitteesta https://nodejs.org/) ja että PATH on päivitetty.")
+            else:
+                print(result.stdout)
     
     return True
 
@@ -71,8 +91,36 @@ def setup_remote_repo():
     repo_name = "{{ cookiecutter.github_repository_name }}"
     
     if github_username and repo_name:
-        print(f"Asetetaan etärepo: github.com/{github_username}/{repo_name}")
-        return run_command(f"git remote add origin https://github.com/{github_username}/{repo_name}.git")
+        print("Luodaan GitHub-repository automaattisesti...")
+        create_repo_cmd = ["gh", "repo", "create", f"{github_username}/{repo_name}", "--public", "--confirm"]
+        create_repo_result = subprocess.run(create_repo_cmd, capture_output=True, text=True)
+        if create_repo_result.returncode != 0:
+            print("Virhe suoritettaessa komentoa:", " ".join(create_repo_cmd))
+            print("Virhekoodi:", create_repo_result.returncode)
+            print("Virheviesti:", create_repo_result.stderr)
+            print("Korjausehdotus: Tarkista, että sinulla on asennettuna GitHub CLI ja että olet kirjautunut sisään.")
+        else:
+            print(create_repo_result.stdout)
+        
+        remote_url = "https://github.com/{{ cookiecutter.github_username }}/{{ cookiecutter.github_repository_name }}.git"
+        print("Asetetaan etärepo:", remote_url)
+        result = subprocess.run(["git", "remote", "add", "origin", remote_url], capture_output=True, text=True)
+        if result.returncode != 0:
+            print("Virhe suoritettaessa komentoa: git remote add origin", remote_url)
+            print("Virhekoodi:", result.returncode)
+            print("Virheviesti:", result.stderr)
+            print("Korjausehdotus: Tarkista, että GitHub-repon URL on oikein ja että verkko toimii.")
+        else:
+            print(result.stdout)
+            print("Lähetetään ensimmäiset commitit etärepoon...")
+            push_result = subprocess.run(["git", "push", "-u", "origin", "HEAD"], capture_output=True, text=True)
+            if push_result.returncode != 0:
+                print("Virhe suoritettaessa komentoa: git push -u origin HEAD")
+                print("Virhekoodi:", push_result.returncode)
+                print("Virheviesti:", push_result.stderr)
+                print("Korjausehdotus: Tarkista, että sinulla on oikeudet puskea kyseiseen repon.")
+            else:
+                print(push_result.stdout)
     return True
 
 

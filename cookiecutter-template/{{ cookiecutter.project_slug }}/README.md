@@ -15,8 +15,6 @@ Tämä projekti käyttää seuraavaa kansiorakennetta:
 ├── .github/                # GitHub Actions ja muut GitHub-asetukset
 ├── config/                 # Konfiguraatiotiedostot
 │   ├── .env.example        # Ympäristömuuttujien esimerkki
-│   ├── docusaurus.config.js # Docusaurus-konfiguraatio
-│   └── sidebars.js         # Docusaurus-sivupalkin konfiguraatio
 ├── docs/                   # Dokumentaatio
 │   ├── architecture.md     # Arkkitehtuuridokumentaatio
 │   ├── changelog.md        # Muutosloki

@@ -33,9 +33,12 @@ jobs:
           repository: panualaluusua/docs
           token: ${{ env.DOCS_PUSH_TOKEN }} # TOKEN luetaan .env-tiedostosta ympäristömuuttujana
           path: central-docs
+      - name: Get repository name
+        id: vars
+        run: echo "REPO_NAME=$(basename $GITHUB_REPOSITORY)" >> $GITHUB_ENV
       - name: Sync docs
         run: |
-          rsync -av --delete site/ central-docs/projekti1/
+          rsync -av --delete site/ central-docs/${REPO_NAME}/
           cd central-docs
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

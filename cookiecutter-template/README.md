@@ -39,6 +39,21 @@ Kun suoritat cookiecutter-komennon, sinulta kysytään seuraavat tiedot:
 
 Cookiecutter luo uuden kansion `project_slug`-arvolla ja kopioi kaikki tiedostot templaten sisältä siihen, korvaten kaikki `{{ cookiecutter.xxx }}`-muuttujat antamillasi arvoilla.
 
+## .env-tiedoston lisääminen projektiin
+
+Jos haluat, että uusi projekti sisältää valmiin `.env`-tiedoston, lisää templateen tiedosto nimellä `dot-env` (ei pisteellä alkavaa nimeä). Cookiecutter muuntaa tämän automaattisesti `.env`-tiedostoksi uuden projektin juureen.
+
+**Esimerkki:**
+
+```bash
+# Template-tiedosto: {{ cookiecutter.project_slug }}/dot-env
+SECRET_KEY={{ cookiecutter.project_slug }}_secret
+```
+
+Uudessa projektissa tämä näkyy tiedostona `.env`.
+
+Voit käyttää tiedoston sisällä cookiecutter-muuttujia kuten `{{ cookiecutter.project_slug }}`.
+
 ## Automaattiset toiminnot
 
 Projektin luonnin jälkeen suoritetaan automaattisesti seuraavat toimenpiteet (hooks/post_gen_project.py):

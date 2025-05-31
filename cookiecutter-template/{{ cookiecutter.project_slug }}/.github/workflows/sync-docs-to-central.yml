@@ -13,32 +13,33 @@ jobs:
   build-and-sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Load .env file
-        uses: xom9ikk/dotenv@v2
       - name: Checkout project repository
         uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install dependencies
+      - name: Install dependencies (pip or poetry)
         run: |
-          pip install -r requirements.txt
-      - name: Build MkDocs documentation
-        run: |
-          mkdocs build -d site
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+          if [ -f pyproject.toml ]; then
+            pip install poetry
+            poetry install --no-interaction --no-root
+          fi
       - name: Checkout central documentation repository
         uses: actions/checkout@v4
         with:
           repository: panualaluusua/docs
-          token: ${{ env.DOCS_PUSH_TOKEN }} # TOKEN luetaan .env-tiedostosta ympäristömuuttujana
+          token: ${{ secrets.DOCS_PUSH_TOKEN }}
           path: central-docs
       - name: Get repository name
         id: vars
         run: echo "REPO_NAME=$(basename $GITHUB_REPOSITORY)" >> $GITHUB_ENV
       - name: Sync docs
         run: |
-          rsync -av --delete site/ central-docs/${REPO_NAME}/
+          rsync -av --delete docs/ central-docs/docs/${REPO_NAME}/
           cd central-docs
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

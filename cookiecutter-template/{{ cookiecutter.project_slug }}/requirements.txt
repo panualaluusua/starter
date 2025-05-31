@@ -1,1 +1,2 @@
 # Lisää riippuvuudet tähän
+python-dotenv

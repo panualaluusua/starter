@@ -92,13 +92,22 @@ def setup_remote_repo():
     
     if github_username and repo_name:
         print("Luodaan GitHub-repository automaattisesti...")
-        create_repo_cmd = ["gh", "repo", "create", f"{github_username}/{repo_name}", "--public", "--confirm"]
+        # Tarkista, onko gh CLI asennettu ja autentikoitu
+        auth_check = subprocess.run(["gh", "auth", "status"], capture_output=True, text=True)
+        if auth_check.returncode != 0:
+            print("\n❌ GitHub CLI ei ole autentikoitu. Suorita 'gh auth login' ja yritä uudelleen.")
+            print("Voit myös luoda repositoryn ja secretsit käsin GitHubin web-käyttöliittymästä.")
+            return False
+        print("Luodaan GitHub-repository automaattisesti...")
+        create_repo_cmd = ["gh", "repo", "create", f"{github_username}/{repo_name}", "--public"]
         create_repo_result = subprocess.run(create_repo_cmd, capture_output=True, text=True)
         if create_repo_result.returncode != 0:
             print("Virhe suoritettaessa komentoa:", " ".join(create_repo_cmd))
             print("Virhekoodi:", create_repo_result.returncode)
             print("Virheviesti:", create_repo_result.stderr)
-            print("Korjausehdotus: Tarkista, että sinulla on asennettuna GitHub CLI ja että olet kirjautunut sisään.")
+            print("Korjausehdotus: Tarkista, että sinulla on asennettuna GitHub CLI ja että olet kirjautunut sisään (gh auth login). Jos --confirm-lippu aiheuttaa virheen, poista se käytöstä.")
+            print("Voit myös luoda repositoryn käsin GitHubissa: https://github.com/new")
+            return False
         else:
             print(create_repo_result.stdout)
         
@@ -165,6 +174,13 @@ def add_docs_push_token_secret():
         print("Syötä DOCS_PUSH_TOKEN (PAT-token, jolla on oikeudet docs-repoon):")
         token = input().strip()
     if github_username and repo_name and token:
+        # Tarkista gh CLI -autentikointi ennen secretsin lisäystä
+        auth_check = subprocess.run(["gh", "auth", "status"], capture_output=True, text=True)
+        if auth_check.returncode != 0:
+            print("\n❌ GitHub CLI ei ole autentikoitu. Suorita 'gh auth login' ja yritä uudelleen.")
+            print("Voit myös lisätä DOCS_PUSH_TOKEN-secretsin käsin GitHubin web-käyttöliittymässä:")
+            print(f"https://github.com/{github_username}/{repo_name}/settings/secrets/actions")
+            return False
         print("Lisätään DOCS_PUSH_TOKEN secret uuteen projektiin...")
         cmd = [
             "gh", "secret", "set", "DOCS_PUSH_TOKEN",
@@ -177,6 +193,8 @@ def add_docs_push_token_secret():
         else:
             print("⚠️  Salaisuuden lisääminen epäonnistui:")
             print(result.stderr)
+            print("Voit lisätä salaisuuden myös käsin GitHubissa:")
+            print(f"https://github.com/{github_username}/{repo_name}/settings/secrets/actions")
     else:
         print("Tarvittavat tiedot puuttuvat, salaisuutta ei lisätty.")
 

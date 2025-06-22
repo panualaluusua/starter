@@ -132,36 +132,6 @@ def setup_remote_repo():
                 print(push_result.stdout)
     return True
 
-def set_github_pages_branch():
-    """Asettaa GitHub Pages -julkaisulähteen automaattisesti gh-pages-haaraan (root)."""
-    github_username = "{{ cookiecutter.github_username }}"
-    repo_name = "{{ cookiecutter.github_repository_name }}"
-    if github_username and repo_name:
-        print("Yritetään asettaa GitHub Pages -julkaisulähde gh-pages-haaraan...")
-        cmd = [
-            "gh", "api",
-            "-X", "PATCH",
-            "-H", "Accept: application/vnd.github+json",
-            f"/repos/{github_username}/{repo_name}/pages",
-            "-f", "source.branch=gh-pages",
-            "-f", "source.path=/"
-        ]
-        try:
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            if result.returncode == 0:
-                print("✅ GitHub Pages -julkaisulähde asetettu onnistuneesti gh-pages-haaraan.")
-            else:
-                print("⚠️  GitHub Pages -asetuksen automaatio epäonnistui.")
-                print("Virhekoodi:", result.returncode)
-                print("Virheviesti:", result.stderr)
-                print("Aseta tarvittaessa Pages-julkaisulähde käsin repositoryn asetuksista.")
-        except Exception as e:
-            print("⚠️  Poikkeus GitHub Pages -asetuksen automaatiossa:", e)
-            print("Aseta tarvittaessa Pages-julkaisulähde käsin repositoryn asetuksista.")
-    else:
-        print("GitHub-tietoja ei annettu, ohitetaan Pages-haaran asetus.")
-    return True
-
 
 def add_docs_push_token_secret():
     """Lukee DOCS_PUSH_TOKEN-arvon .env-tiedostosta tai ympäristömuuttujasta ja lisää sen uuden projektin GitHub-repoon gh CLI:llä."""
@@ -199,6 +169,23 @@ def add_docs_push_token_secret():
         print("Tarvittavat tiedot puuttuvat, salaisuutta ei lisätty.")
 
 
+def initialize_taskmaster():
+    """Initializes taskmaster-ai in the new project."""
+    print("Initializing taskmaster-ai...")
+    
+    init_cmd = "npx --yes task-master-ai init --yes"
+    if not run_command(init_cmd):
+        print("Warning: taskmaster-ai initialization failed.")
+        return False
+        
+    parse_cmd = "npx --yes task-master-ai parse-prd docs/PRD.md"
+    if not run_command(parse_cmd):
+        print("Warning: taskmaster-ai PRD parsing failed.")
+        return False
+
+    return True
+
+
 def main():
     """Pääfunktio, joka suorittaa kaikki toimenpiteet."""
     print("Aloitetaan projektin automaattinen alustus...")
@@ -209,8 +196,8 @@ def main():
         install_dependencies,
         create_first_commit,
         setup_remote_repo,
-        set_github_pages_branch,
-        add_docs_push_token_secret
+        add_docs_push_token_secret,
+        initialize_taskmaster
     ]
     
     for step in steps:
